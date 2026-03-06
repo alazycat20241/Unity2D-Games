@@ -33,21 +33,10 @@ public class Turn : MonoBehaviour
                         turnDirection.x * cos - turnDirection.y * sin,
                         turnDirection.x * sin + turnDirection.y * cos
                     );
-
                     player.SetDirection(rotatedDirection.normalized);
                     hasTriggered = true;  // 只触发一次
-
-                    Debug.Log($"中点转向：{turnDirection} → {rotatedDirection}");
                 }
             }
-        }
-    }
-
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            hasTriggered = false;  // 离开后重置，下次进来重新判定
         }
     }
 }

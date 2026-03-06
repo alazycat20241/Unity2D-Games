@@ -8,12 +8,13 @@ public class MusicManager : MonoBehaviour
 
     [Header("音效")]
     public AudioClip clickSound;      // 按键音
+    public AudioClip loseSound;       // 失败音效
+    public AudioClip winSound;        // 胜利音效
 
-    [Header("环境音")]
+    [Header("音乐")]
     public AudioClip bgmSound;         // 背景音乐
     public AudioSource bgmSource;      // 专门播放背景音乐的AudioSource
-
-    public AudioSource sfxSource;     // 专门播放音效的AudioSource
+    public AudioSource sfxSource;      // 专门播放音效的AudioSource
 
     void Awake()
     {
@@ -21,28 +22,71 @@ public class MusicManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);  // 切换场景不销毁
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
+            return;
         }
 
         // 设置背景音乐播放器
         if (bgmSource == null)
             bgmSource = gameObject.AddComponent<AudioSource>();
 
-        // 播放背景音乐
-        PlayBGM();
+        // 设置音效播放器
+        if (sfxSource == null)
+            sfxSource = gameObject.AddComponent<AudioSource>();
     }
 
-    void PlayBGM()
+    // 播放背景音乐（从头开始）
+    public void PlayBGM()
     {
         if (bgmSound != null)
         {
             bgmSource.clip = bgmSound;
-            bgmSource.loop = true;      // 循环播放
+            bgmSource.loop = true;
             bgmSource.Play();
+            Debug.Log("开始播放背景音乐");
+        }
+    }
+
+    // 停止背景音乐
+    public void StopBGM()
+    {
+        if (bgmSource.isPlaying)
+        {
+            bgmSource.Stop();
+            Debug.Log("停止背景音乐");
+        }
+    }
+
+    // 停止所有音乐/音效
+    public void StopAllMusic()
+    {
+        if (bgmSource.isPlaying)
+            bgmSource.Stop();
+        if (sfxSource.isPlaying)
+            sfxSource.Stop();
+    }
+
+    // 播放失败音效
+    public void PlayLoseSound()
+    {
+        if (loseSound != null)
+        {
+            sfxSource.PlayOneShot(loseSound);
+            Debug.Log("播放失败音效");
+        }
+    }
+
+    // 播放胜利音效
+    public void PlayWinSound()
+    {
+        if (winSound != null)
+        {
+            sfxSource.PlayOneShot(winSound);
+            Debug.Log("播放胜利音效");
         }
     }
 

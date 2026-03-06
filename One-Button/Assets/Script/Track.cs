@@ -7,78 +7,73 @@ public class Track : MonoBehaviour
     public enum TrackColor { Red, Orange, Yellow, Blue }
     public TrackColor trackColor;
 
-    private SpriteRenderer spriteRenderer;
-    private static List<Track> wrongTracks = new List<Track>();  // 记录连续的错误轨道
+    [Header("转向设置")]
+    public bool isTurn = false;           // 是否是转弯格子
+    public Vector2 turnDirection;          // (1,0)右, (0,1)上, (-1,0)左, (0,-1)下
 
+    [Header("判定设置")]
+    public float centerRadius = 0.5f;      // 中心区域半径
 
+    private bool hasReachedCenter = false;  // 是否到达中心
+    private bool hasTurned = false;         // 是否已转向
 
-    void Start()
-    {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        UpdateColor();
-    }
-
-    void UpdateColor()
-    {
-        switch (trackColor)
-        {
-            case TrackColor.Red: spriteRenderer.color = Color.red; break;
-            case TrackColor.Orange: spriteRenderer.color = new Color(1f, 0.5f, 0f); break;
-            case TrackColor.Yellow: spriteRenderer.color = Color.yellow; break;
-            case TrackColor.Blue: spriteRenderer.color = Color.blue; break;
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerStay2D(Collider2D other)
     {
         if (!GameManager.Instance.isGameActive) return;
 
         if (other.CompareTag("Player"))
         {
             PlayerController player = other.GetComponent<PlayerController>();
-            if (player != null)
+            if (player == null) return;
+
+            float distToCenter = Vector2.Distance(other.transform.position, transform.position);
+
+            // 到达中心时进行判定
+            if (!hasReachedCenter && distToCenter < centerRadius)
             {
-                // 检查颜色是否匹配
-                bool isMatch = IsColorMatch(player.currentColor);
-
-                if (!isMatch)
+                hasReachedCenter = true;
+                Debug.Log("到达中心");
+                // 颜色判定
+                if ((int)player.currentColor != (int)trackColor)
                 {
-                    // 颜色不匹配，加入错误列表
-                    wrongTracks.Add(this);
+                    player.Die();
+                    return;
+                }
 
-                    // 如果连续错误达到2个，才死亡
-                    if (wrongTracks.Count >= 2)
-                    {
-                        player.Die();
-                        wrongTracks.Clear();
-                    }
-                }
-                else
+                // 如果是转弯格子，记录要转的方向（但先不转）
+                if (isTurn && !hasTurned)
                 {
-                    // 颜色匹配，清空错误列表
-                    wrongTracks.Clear();
+                    // 直接使用turnDirection 直角转弯
+                    player.SetDirection(turnDirection.normalized);
+                    hasTurned = true;
+                    Debug.Log($"直角转弯：{turnDirection}");
                 }
+                    Debug.Log(hasTurned);
             }
         }
-    }
-
-    bool IsColorMatch(PlayerController.PlayerColor playerColor)
-    {
-        return (playerColor == PlayerController.PlayerColor.Red && trackColor == TrackColor.Red) ||
-               (playerColor == PlayerController.PlayerColor.Orange && trackColor == TrackColor.Orange) ||
-               (playerColor == PlayerController.PlayerColor.Yellow && trackColor == TrackColor.Yellow) ||
-               (playerColor == PlayerController.PlayerColor.Blue && trackColor == TrackColor.Blue);
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        // 如果游戏还在进行中，但玩家离开了轨道（没有到达中心或没有正确转向）
+        if (GameManager.Instance.isGameActive)
         {
-            // 离开轨道时，如果这个轨道在错误列表里，移除它
-            if (wrongTracks.Contains(this))
+            PlayerController player = other.GetComponent<PlayerController>();
+            if (player != null)
             {
-                wrongTracks.Remove(this);
+                // 如果还没到达中心就离开轨道，或者已经到达中心但没触发转向（针对转弯格子）
+                if (!hasReachedCenter || (isTurn && !hasTurned))
+                {
+                    Debug.Log($"冲出轨道！格子：{trackColor}，到达中心：{hasReachedCenter}，已转向：{hasTurned}");
+                    player.Die();
+                    return;
+                }
             }
         }
+
+        // 离开格子，重置状态
+        hasReachedCenter = false;
+        hasTurned = false;
     }
+
 }

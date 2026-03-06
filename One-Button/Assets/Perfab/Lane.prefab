@@ -11,11 +11,10 @@ GameObject:
   - component: {fileID: 472693788862736425}
   - component: {fileID: 7952265725806602407}
   - component: {fileID: 1848385374030309570}
-  - component: {fileID: 4491880560433126151}
   - component: {fileID: 4532974249828373538}
   m_Layer: 0
   m_Name: Lane
-  m_TagString: Untagged
+  m_TagString: Track
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -100,18 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   trackColor: 0
---- !u!114 &4491880560433126151
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2511329486932827626}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea0d9e74c92623a43845f6c4378dc558, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  hasTurn: 0
   turnDirection: {x: 0, y: 0}
 --- !u!61 &4532974249828373538
 BoxCollider2D:
