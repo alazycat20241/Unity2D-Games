@@ -6,49 +6,64 @@ public class PlayerController : MonoBehaviour
 {
     [Header("移动设置")]
     public float moveSpeed = 3f;
-    private Vector2 moveDirection = Vector2.right;  // 当前移动方向
+    private Vector2 moveDirection = Vector2.right;
 
     [Header("颜色设置")]
     public SpriteRenderer playerSprite;
     public Color redColor = Color.red;
+    public Color orangeColor = new Color(1f, 0.5f, 0f);
+    public Color yellowColor = Color.yellow;
     public Color blueColor = Color.blue;
 
-    public enum PlayerColor { Red, Blue }
+    [Header("变色动画")]
+    public float colorTransitionSpeed = 5f;  // 颜色变化速度
+    private Color targetColor;                 // 目标颜色
+    private Color currentVisualColor;          // 当前显示的颜色
+
+    public enum PlayerColor { Red, Orange, Yellow, Blue }
     public PlayerColor currentColor = PlayerColor.Red;
 
     void Start()
     {
-        UpdateColor();
+        currentVisualColor = redColor;
+        targetColor = redColor;
+        playerSprite.color = currentVisualColor;
     }
 
     void Update()
     {
         if (!GameManager.Instance.isGameActive) return;
 
-        // 空格切换颜色
+        // 按一次变一次色
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            currentColor = (currentColor == PlayerColor.Red) ?
-                PlayerColor.Blue : PlayerColor.Red;
-            UpdateColor();
+            currentColor = (PlayerColor)(((int)currentColor + 1) % 4);
+
+            // 设置新的目标颜色
+            switch (currentColor)
+            {
+                case PlayerColor.Red: targetColor = redColor; break;
+                case PlayerColor.Orange: targetColor = orangeColor; break;
+                case PlayerColor.Yellow: targetColor = yellowColor; break;
+                case PlayerColor.Blue: targetColor = blueColor; break;
+            }
+
+            MusicManager.Instance.PlayClickSound();
         }
+
+        // 平滑过渡到目标颜色
+        currentVisualColor = Color.Lerp(currentVisualColor, targetColor, colorTransitionSpeed * Time.deltaTime);
+        playerSprite.color = currentVisualColor;
 
         // 向当前方向自动移动
         transform.Translate(moveDirection * moveSpeed * Time.deltaTime);
     }
 
-    void UpdateColor()
-    {
-        playerSprite.color = (currentColor == PlayerColor.Red) ? redColor : blueColor;
-    }
-
-    // 转向方法（被转向触发器调用）
     public void SetDirection(Vector2 newDirection)
     {
         moveDirection = newDirection;
     }
 
-    // 死亡方法（被轨道调用）
     public void Die()
     {
         GameManager.Instance.GameOver();
