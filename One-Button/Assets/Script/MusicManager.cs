@@ -18,7 +18,6 @@ public class MusicManager : MonoBehaviour
 
     void Awake()
     {
-        // µ•¿˝
         if (Instance == null)
         {
             Instance = this;
@@ -47,7 +46,15 @@ public class MusicManager : MonoBehaviour
             bgmSource.clip = bgmSound;
             bgmSource.loop = true;
             bgmSource.Play();
-            Debug.Log("ø™ º≤•∑≈±≥æ∞“Ù¿÷");
+        }
+    }
+
+    // ≤•∑≈∞¥º¸“Ù
+    public void PlayClickSound()
+    {
+        if (clickSound != null)
+        {
+            sfxSource.PlayOneShot(clickSound);
         }
     }
 
@@ -57,7 +64,6 @@ public class MusicManager : MonoBehaviour
         if (bgmSource.isPlaying)
         {
             bgmSource.Stop();
-            Debug.Log("Õ£÷π±≥æ∞“Ù¿÷");
         }
     }
 
@@ -71,12 +77,11 @@ public class MusicManager : MonoBehaviour
     }
 
     // ≤•∑≈ ß∞‹“Ù–ß
-    public void PlayLoseSound()
+    /*public void PlayLoseSound()
     {
         if (loseSound != null)
         {
             sfxSource.PlayOneShot(loseSound);
-            Debug.Log("≤•∑≈ ß∞‹“Ù–ß");
         }
     }
 
@@ -88,14 +93,6 @@ public class MusicManager : MonoBehaviour
             sfxSource.PlayOneShot(winSound);
             Debug.Log("≤•∑≈ §¿˚“Ù–ß");
         }
-    }
+    }*/
 
-    // ≤•∑≈∞¥º¸“Ù
-    public void PlayClickSound()
-    {
-        if (clickSound != null)
-        {
-            sfxSource.PlayOneShot(clickSound);
-        }
-    }
 }

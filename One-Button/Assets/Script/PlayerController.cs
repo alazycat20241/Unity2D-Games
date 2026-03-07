@@ -6,7 +6,8 @@ public class PlayerController : MonoBehaviour
 {
     [Header("移动设置")]
     public float moveSpeed = 3f;
-    private Vector2 moveDirection = Vector2.right;
+    public Transform[] pathPoints;  // 路线上的点
+    private int currentPathIndex = 0;
 
     [Header("玩家图片")]
     public SpriteRenderer playerSprite;
@@ -37,8 +38,21 @@ public class PlayerController : MonoBehaviour
             MusicManager.Instance.PlayClickSound();
         }
 
-        // 自动前进
-        transform.Translate(moveDirection * moveSpeed * Time.deltaTime);
+        // 向当前目标点移动
+        if (currentPathIndex < pathPoints.Length)
+        {
+            Vector3 targetPos = pathPoints[currentPathIndex].position;
+            Vector3 moveDir = (targetPos - transform.position).normalized; // 每帧重新计算方向
+            transform.Translate(moveDir * moveSpeed * Time.deltaTime);
+
+            // 到达目标点
+            if (Vector3.Distance(transform.position, targetPos) < 0.05f)
+            {
+                //transform.position = targetPos;
+                currentPathIndex++;
+                Debug.Log(currentPathIndex);
+            }
+        }
     }
 
     void UpdateSprite()
@@ -50,16 +64,6 @@ public class PlayerController : MonoBehaviour
             case PlayerColor.Yellow: playerSprite.sprite = yellowSprite; break;
             case PlayerColor.Blue: playerSprite.sprite = blueSprite; break;
         }
-    }
-
-    public void SetDirection(Vector2 newDirection)
-    {
-        moveDirection = newDirection;
-    }
-
-    public Vector2 GetDirection()
-    {
-        return moveDirection;
     }
 
     public void Die()

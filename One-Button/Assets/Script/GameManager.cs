@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,10 +13,15 @@ public class GameManager : MonoBehaviour
     public Transform finishPoint;
     public GameObject player;
 
-    [HideInInspector] public bool isGameActive = false;  // 改为false，等待空格开始
-    [HideInInspector] public bool isGameOver = false;    // 标记游戏是否已结束
+    [Header("开始界面")]
+    public GameObject startPanel;  // 开始界面面板
+    public Button startButton;      // 开始按钮
+    public Button quitButton;       // 退出按钮
 
-    private bool isWaitingForStart = true;  // 是否等待开始
+    [HideInInspector] public bool isGameActive = false;
+    [HideInInspector] public bool isGameOver = false;
+
+    private bool isWaitingForStart = true;
 
     void Awake() => Instance = this;
 
@@ -27,38 +33,41 @@ public class GameManager : MonoBehaviour
 
         if (winPanel) winPanel.SetActive(false);
         if (losePanel) losePanel.SetActive(false);
-        
-        // 游戏初始不开始，等待空格
+
+        // 显示开始界面
+        if (startPanel)
+        {
+            startPanel.SetActive(true);
+
+            // 绑定按钮事件
+            if (startButton)
+                startButton.onClick.AddListener(StartGame);
+
+            if (quitButton)
+                quitButton.onClick.AddListener(Quit);
+        }
+
+        // 游戏初始不开始
         isGameActive = false;
         isWaitingForStart = true;
-        
+
         // 不播放音乐，等待开始
         MusicManager.Instance.StopAllMusic();
-
     }
 
     void Update()
     {
-        // 空格键开始游戏
+        //
         if (isWaitingForStart && Input.GetKeyDown(KeyCode.Space))
         {
             StartGame();
         }
 
         // 游戏结束后的处理
-        if (!isGameActive && !isWaitingForStart)
+        // 只要游戏结束（显示胜利或失败面板），按空格键就重开
+        if ((winPanel.activeSelf || losePanel.activeSelf) && Input.GetKeyDown(KeyCode.Space))
         {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                if (isGameOver)
-                {
-                    Restart();
-                }
-                else
-                {
-                    Quit();
-                }
-            }
+            Restart();
         }
 
         // 检查是否到达终点
@@ -72,25 +81,40 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    //开始按钮点击
+    public void OnStartButtonClicked()
+    {
+        if (startPanel)
+            startPanel.SetActive(false);
+    }
+
     void StartGame()
     {
+        // 播放背景音乐
+        MusicManager.Instance.PlayBGM();
+        // 隐藏开始界面
+        if (startPanel)
+            startPanel.SetActive(false);
+
         if (player != null)
             player.SetActive(true);
+
         isWaitingForStart = false;
         isGameActive = true;
-        MusicManager.Instance.PlayBGM();  // 开始播放背景音乐
-        Debug.Log("游戏开始");
+
     }
 
     public void GameOver()
     {
+        //player.SetActive(false);
+
         if (!isGameActive) return;
         isGameActive = false;
         isGameOver = true;
 
         if (losePanel) losePanel.SetActive(true);
-        MusicManager.Instance.StopBGM();  // 停止背景音乐
-        MusicManager.Instance.PlayLoseSound();  // 播放失败音效
+        MusicManager.Instance.StopBGM();
+        isWaitingForStart = true;
     }
 
     public void GameWin()
@@ -100,15 +124,22 @@ public class GameManager : MonoBehaviour
         isGameOver = false;
 
         if (winPanel) winPanel.SetActive(true);
-        MusicManager.Instance.StopBGM();  // 停止背景音乐
-        MusicManager.Instance.PlayWinSound();  // 播放胜利音效
+        MusicManager.Instance.StopBGM();
+        isWaitingForStart = true;
     }
 
     public void Restart()
     {
-        MusicManager.Instance.StopAllMusic();  // 停止所有音乐
+        MusicManager.Instance.StopAllMusic();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
-    
-    public void Quit() => Application.Quit();
+
+    public void Quit()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+    }
 }

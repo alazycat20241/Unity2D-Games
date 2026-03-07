@@ -7,15 +7,10 @@ public class Track : MonoBehaviour
     public enum TrackColor { Red, Orange, Yellow, Blue }
     public TrackColor trackColor;
 
-    [Header("转向设置")]
-    public bool isTurn = false;           // 是否是转弯格子
-    public Vector2 turnDirection;          // (1,0)右, (0,1)上, (-1,0)左, (0,-1)下
-
     [Header("判定设置")]
-    public float centerRadius = 0.5f;      // 中心区域半径
+    public float centerRadius = 0.4f;      // 中心区域半径
 
     private bool hasReachedCenter = false;  // 是否到达中心
-    private bool hasTurned = false;         // 是否已转向
 
     private void OnTriggerStay2D(Collider2D other)
     {
@@ -39,16 +34,6 @@ public class Track : MonoBehaviour
                     player.Die();
                     return;
                 }
-
-                // 如果是转弯格子，记录要转的方向（但先不转）
-                if (isTurn && !hasTurned)
-                {
-                    // 直接使用turnDirection 直角转弯
-                    player.SetDirection(turnDirection.normalized);
-                    hasTurned = true;
-                    Debug.Log($"直角转弯：{turnDirection}");
-                }
-                    Debug.Log(hasTurned);
             }
         }
     }
@@ -62,9 +47,8 @@ public class Track : MonoBehaviour
             if (player != null)
             {
                 // 如果还没到达中心就离开轨道，或者已经到达中心但没触发转向（针对转弯格子）
-                if (!hasReachedCenter || (isTurn && !hasTurned))
+                if (!hasReachedCenter)
                 {
-                    Debug.Log($"冲出轨道！格子：{trackColor}，到达中心：{hasReachedCenter}，已转向：{hasTurned}");
                     player.Die();
                     return;
                 }
@@ -73,7 +57,6 @@ public class Track : MonoBehaviour
 
         // 离开格子，重置状态
         hasReachedCenter = false;
-        hasTurned = false;
     }
 
 }
