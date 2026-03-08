@@ -8,7 +8,7 @@ public class Track : MonoBehaviour
     public TrackColor trackColor;
 
     [Header("判定设置")]
-    public float centerRadius = 0.4f;      // 中心区域半径
+    public float centerRadius;      // 中心区域半径
 
     private bool hasReachedCenter = false;  // 是否到达中心
 
@@ -27,7 +27,6 @@ public class Track : MonoBehaviour
             if (!hasReachedCenter && distToCenter < centerRadius)
             {
                 hasReachedCenter = true;
-                Debug.Log("到达中心");
                 // 颜色判定
                 if ((int)player.currentColor != (int)trackColor)
                 {
