@@ -9,7 +9,6 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     public GameObject winPanel;
-    public Transform finishPoint;
     public GameObject player;
 
     [Header("重新开始界面")]
@@ -19,6 +18,7 @@ public class GameManager : MonoBehaviour
 
     [HideInInspector] public bool isGameActive = false;
     [HideInInspector] public bool isGameOver = false;
+    [HideInInspector] private bool isGameWin= false;
 
     [Header("游戏设置")]
     public float startDelay = 0.5f;  // 玩家延迟开始的时间
@@ -34,9 +34,6 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // 开始时禁用玩家
-        if (player != null)
-            player.SetActive(false);
 
         if (winPanel) winPanel.SetActive(false);
         if (restartPanel) restartPanel.SetActive(false);
@@ -47,9 +44,6 @@ public class GameManager : MonoBehaviour
 
         // 游戏初始不开始
         isGameActive = false;
-
-        // 不播放音乐，等待开始
-        MusicManager.Instance.StopAllMusic();
     }
 
     void Update()
@@ -60,13 +54,11 @@ public class GameManager : MonoBehaviour
         }
 
 
-        // 检查是否到达终点
-        if (isGameActive && finishPoint != null)
+        if (isGameWin)
         {
-            PlayerController player = FindObjectOfType<PlayerController>();
-            if (player != null && Vector2.Distance(player.transform.position, finishPoint.position) < 0.5f)
+            if (Input.GetKeyDown(KeyCode.Space))
             {
-                GameWin();
+                LoadNextLevel();
             }
         }
     }
@@ -74,8 +66,8 @@ public class GameManager : MonoBehaviour
 
     void StartGame()
     {
-        // 播放背景音乐
-        MusicManager.Instance.PlayBGM();
+        // 通知MusicManager游戏开始了
+        MusicManager.Instance.OnGameStart();
         // 延迟激活玩家
         StartCoroutine(DelayedPlayerActivation());
     }
@@ -84,34 +76,34 @@ public class GameManager : MonoBehaviour
         // 等待设定的延迟时间
         yield return new WaitForSeconds(startDelay);
 
-        // 激活玩家并开始游戏
-        if (player != null)
-            player.SetActive(true);
         isGameActive = true;
     }
     public void GameOver()
     {
-
+        // 通知MusicManager游戏失败
+        MusicManager.Instance.OnGameOver();
         if (!isGameActive) return;
         isGameActive = false;
         isGameOver = true;
 
         if (restartPanel) restartPanel.SetActive(true);
-        MusicManager.Instance.StopBGM();
     }
 
     public void GameWin()
     {
+        // 通知MusicManager游戏胜利
+        MusicManager.Instance.OnGameWin();
         if (!isGameActive) return;
         isGameActive = false;
         isGameOver = false;
-
+        isGameWin = true;
         if (winPanel) winPanel.SetActive(true);
     }
 
     public void Restart()
     {
-        MusicManager.Instance.StopAllMusic();
+        // 通知MusicManager游戏重启
+        MusicManager.Instance.OnGameRestart();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -122,5 +114,22 @@ public class GameManager : MonoBehaviour
 #else
             Application.Quit();
 #endif
+    }
+
+    public void LoadNextLevel()
+    {
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        int nextSceneIndex = currentSceneIndex + 1;
+
+        // 检查是否有下一关
+        if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
+        {
+            SceneManager.LoadScene(nextSceneIndex);
+        }
+        else
+        {
+            //返回主菜单
+            SceneManager.LoadScene(0);
+        }
     }
 }

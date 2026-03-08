@@ -6,7 +6,8 @@ public class PlayerController : MonoBehaviour
 {
     [Header("移动设置")]
     public float moveSpeed = 3f;
-    public Transform[] pathPoints;  // 路线上的点
+    public Transform pathParent;  // 拖入路径母物体，自动读取其子物体作为路径点
+    private Transform[] pathPoints;  // 内部使用的路径点数组
     private int currentPathIndex = 0;
 
     [Header("玩家图片")]
@@ -24,6 +25,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         UpdateSprite();
+        LoadPathPoints(); // 初始化时加载路径点
     }
 
     void Update()
@@ -48,9 +50,13 @@ public class PlayerController : MonoBehaviour
             // 到达目标点
             if (Vector3.Distance(transform.position, targetPos) < 0.05f)
             {
-                //transform.position = targetPos;
                 currentPathIndex++;
-                Debug.Log(currentPathIndex);
+
+                // 检查是否走完了所有路径点
+                if (currentPathIndex >= pathPoints.Length)
+                {
+                    GameManager.Instance.GameWin();  // 通知游戏胜利
+                }
             }
         }
     }
@@ -64,6 +70,25 @@ public class PlayerController : MonoBehaviour
             case PlayerColor.Yellow: playerSprite.sprite = yellowSprite; break;
             case PlayerColor.Blue: playerSprite.sprite = blueSprite; break;
         }
+    }
+
+    // 加载路径点：从 pathParent 读取所有子物体，按Hierarchy顺序（索引顺序）
+    private void LoadPathPoints()
+    {
+        if (pathParent == null)
+        {
+            Debug.LogWarning("pathParent 未设置，无法加载路径点");
+            return;
+        }
+
+        int childCount = pathParent.childCount;
+        pathPoints = new Transform[childCount];
+        for (int i = 0; i < childCount; i++)
+        {
+            pathPoints[i] = pathParent.GetChild(i); // 按索引顺序，即Hierarchy中的顺序
+        }
+
+        Debug.Log($"已加载 {pathPoints.Length} 个路径点，按Hierarchy顺序排列");
     }
 
     public void Die()

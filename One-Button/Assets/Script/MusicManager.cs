@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MusicManager : MonoBehaviour
 {
@@ -8,13 +9,18 @@ public class MusicManager : MonoBehaviour
 
     [Header("音效")]
     public AudioClip clickSound;      // 按键音
-    public AudioClip loseSound;       // 失败音效
-    public AudioClip winSound;        // 胜利音效
 
-    [Header("音乐")]
-    public AudioClip bgmSound;         // 背景音乐
+    [Header("背景音乐")]
+    public AudioClip menuBGM;         // 菜单背景音乐（也是失败时的音乐）
+    public AudioClip[] levelBGM;      // 关卡音乐数组 [0]=关卡1, [1]=关卡2, [2]=关卡3
+
+    [Header("音频源")]
     public AudioSource bgmSource;      // 专门播放背景音乐的AudioSource
     public AudioSource sfxSource;      // 专门播放音效的AudioSource
+
+    private int currentLevelIndex = -1; // 当前播放的关卡索引
+    private bool isWaitingForVictory = false; // 是否在等待胜利后的音乐切换
+    private bool isGameStarted = false; // 游戏是否已经开始
 
     void Awake()
     {
@@ -22,34 +28,205 @@ public class MusicManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            InitializeAudioSources();
         }
         else
         {
             Destroy(gameObject);
+        }
+    }
+
+    void Start()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
+        // 初始播放菜单音乐
+        PlayMenuBGM();
+    }
+
+    void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void Update()
+    {
+        // 检查是否在等待胜利后切换音乐
+        if (isWaitingForVictory && !bgmSource.isPlaying)
+        {
+            PlayMenuBGM();
+            isWaitingForVictory = false;
+            Debug.Log("胜利：关卡音乐播放完毕，切换到菜单音乐");
+        }
+    }
+
+    // 场景加载时的回调
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        string sceneName = scene.name;
+
+        // 每次加载新场景时，重置游戏开始状态
+        isGameStarted = false;
+
+        // 根据场景类型决定音乐
+        if (sceneName == "Level" || sceneName == "Level 2" || sceneName == "Level 3")
+        {
+            // 进入游戏场景，但游戏还没开始，继续播放菜单音乐
+            Debug.Log("进入游戏场景，继续播放菜单音乐，等待GameManager通知开始游戏");
+        }
+        else
+        {
+            // 非游戏场景（如菜单），确保播放菜单音乐
+            PlayMenuBGM();
+        }
+    }
+
+    private void InitializeAudioSources()
+    {
+        if (bgmSource == null)
+        {
+            bgmSource = gameObject.AddComponent<AudioSource>();
+            bgmSource.loop = true;
+            bgmSource.playOnAwake = false;
+        }
+
+        if (sfxSource == null)
+        {
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            sfxSource.playOnAwake = false;
+        }
+    }
+
+    // === GameManager 调用的方法 ===
+
+    /// <summary>
+    /// 游戏开始时调用（由GameManager在StartGame()中调用）
+    /// </summary>
+    public void OnGameStart()
+    {
+        if (isGameStarted) return; // 防止重复调用
+
+        string sceneName = SceneManager.GetActiveScene().name;
+
+        if (sceneName == "Level")
+        {
+            PlayLevelBGM(1);
+            isGameStarted = true;
+        }
+        else if (sceneName == "Level 2")
+        {
+            PlayLevelBGM(2);
+            isGameStarted = true;
+        }
+        else if (sceneName == "Level 3")
+        {
+            PlayLevelBGM(3);
+            isGameStarted = true;
+        }
+    }
+
+    /// <summary>
+    /// 游戏胜利时调用（由GameManager在GameWin()中调用）
+    /// </summary>
+    public void OnGameWin()
+    {
+        if (bgmSource.isPlaying && currentLevelIndex >= 0)
+        {
+            bgmSource.loop = false;
+            isWaitingForVictory = true;
+            isGameStarted = false;
+            Debug.Log("胜利：关卡音乐将继续播放直到结束");
+        }
+        else
+        {
+            PlayMenuBGM();
+            isGameStarted = false;
+        }
+    }
+
+    /// <summary>
+    /// 游戏失败时调用（由GameManager在GameOver()中调用）
+    /// </summary>
+    public void OnGameOver()
+    {
+        PlayMenuBGM();
+        isGameStarted = false;
+        Debug.Log("失败：立即切换到菜单音乐");
+    }
+
+    /// <summary>
+    /// 重启游戏时调用（由GameManager在Restart()中调用）
+    /// </summary>
+    public void OnGameRestart()
+    {
+        // 不停止音乐，让音乐继续播放
+        // 场景重新加载后，OnSceneLoaded会处理
+        isGameStarted = false;
+    }
+
+    // === 私有方法 ===
+
+    private void PlayMenuBGM()
+    {
+        if (menuBGM != null)
+        {
+            // 如果已经在播放菜单音乐，就不重复播放
+            if (bgmSource.clip == menuBGM)
+                return;
+
+            PlayBGM(menuBGM);
+            currentLevelIndex = -1;
+            isWaitingForVictory = false;
+            Debug.Log("播放菜单音乐");
+        }
+    }
+
+    private void PlayLevelBGM(int levelNumber)
+    {
+        if (levelNumber < 1 || levelNumber > levelBGM.Length)
+        {
+            Debug.LogWarning($"关卡编号错误：{levelNumber}");
             return;
         }
 
-        // 设置背景音乐播放器
-        if (bgmSource == null)
-            bgmSource = gameObject.AddComponent<AudioSource>();
-
-        // 设置音效播放器
-        if (sfxSource == null)
-            sfxSource = gameObject.AddComponent<AudioSource>();
-    }
-
-    // 播放背景音乐（从头开始）
-    public void PlayBGM()
-    {
-        if (bgmSound != null)
+        int index = levelNumber - 1;
+        if (levelBGM[index] != null)
         {
-            bgmSource.clip = bgmSound;
+            // 如果已经在播放这个关卡音乐，就不重复播放
+            if (bgmSource.clip == levelBGM[index] && bgmSource.isPlaying)
+                return;
+
+            PlayBGM(levelBGM[index]);
+            currentLevelIndex = index;
             bgmSource.loop = true;
-            bgmSource.Play();
+            isWaitingForVictory = false;
+            Debug.Log($"播放关卡{levelNumber}音乐");
         }
     }
 
-    // 播放按键音
+    private void PlayBGM(AudioClip clip)
+    {
+        if (clip == null) return;
+
+        // 如果正在播放相同的音乐，则不切换
+        if (bgmSource.clip == clip && bgmSource.isPlaying)
+            return;
+
+        bgmSource.clip = clip;
+        bgmSource.Play();
+    }
+
+    public void StopBGM()
+    {
+        if (bgmSource.isPlaying)
+        {
+            bgmSource.Stop();
+        }
+        isWaitingForVictory = false;
+    }
+
+ 
+
     public void PlayClickSound()
     {
         if (clickSound != null)
@@ -58,41 +235,28 @@ public class MusicManager : MonoBehaviour
         }
     }
 
-    // 停止背景音乐
-    public void StopBGM()
+    public void SetBGMVolume(float volume)
     {
-        if (bgmSource.isPlaying)
-        {
-            bgmSource.Stop();
-        }
+        bgmSource.volume = Mathf.Clamp01(volume);
     }
 
-    // 停止所有音乐/音效
-    public void StopAllMusic()
+    public void SetSFXVolume(float volume)
     {
-        if (bgmSource.isPlaying)
-            bgmSource.Stop();
-        if (sfxSource.isPlaying)
-            sfxSource.Stop();
+        sfxSource.volume = Mathf.Clamp01(volume);
     }
 
-    // 播放失败音效
-    /*public void PlayLoseSound()
+    // === 辅助方法 ===
+
+
+    // 获取当前是否在播放关卡音乐
+    public bool IsPlayingLevelBGM()
     {
-        if (loseSound != null)
-        {
-            sfxSource.PlayOneShot(loseSound);
-        }
+        return currentLevelIndex >= 0;
     }
 
-    // 播放胜利音效
-    public void PlayWinSound()
+    // 获取当前是否游戏已开始
+    public bool IsGameStarted()
     {
-        if (winSound != null)
-        {
-            sfxSource.PlayOneShot(winSound);
-            Debug.Log("播放胜利音效");
-        }
-    }*/
-
+        return isGameStarted;
+    }
 }
