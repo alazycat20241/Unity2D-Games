@@ -77,7 +77,6 @@ public class PlayerController : MonoBehaviour
     {
         if (pathParent == null)
         {
-            Debug.LogWarning("pathParent 未设置，无法加载路径点");
             return;
         }
 
@@ -88,7 +87,6 @@ public class PlayerController : MonoBehaviour
             pathPoints[i] = pathParent.GetChild(i); // 按索引顺序，即Hierarchy中的顺序
         }
 
-        Debug.Log($"已加载 {pathPoints.Length} 个路径点，按Hierarchy顺序排列");
     }
 
     public void Die()

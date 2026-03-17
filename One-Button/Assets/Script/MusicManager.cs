@@ -56,7 +56,6 @@ public class MusicManager : MonoBehaviour
         {
             PlayMenuBGM();
             isWaitingForVictory = false;
-            Debug.Log("胜利：关卡音乐播放完毕，切换到菜单音乐");
         }
     }
 
@@ -72,7 +71,6 @@ public class MusicManager : MonoBehaviour
         if (sceneName == "Level" || sceneName == "Level 2" || sceneName == "Level 3")
         {
             // 进入游戏场景，但游戏还没开始，继续播放菜单音乐
-            Debug.Log("进入游戏场景，继续播放菜单音乐，等待GameManager通知开始游戏");
         }
         else
         {
@@ -99,9 +97,7 @@ public class MusicManager : MonoBehaviour
 
     // === GameManager 调用的方法 ===
 
-    /// <summary>
-    /// 游戏开始时调用（由GameManager在StartGame()中调用）
-    /// </summary>
+    // 游戏开始时调用
     public void OnGameStart()
     {
         if (isGameStarted) return; // 防止重复调用
@@ -125,9 +121,6 @@ public class MusicManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 游戏胜利时调用（由GameManager在GameWin()中调用）
-    /// </summary>
     public void OnGameWin()
     {
         if (bgmSource.isPlaying && currentLevelIndex >= 0)
@@ -135,7 +128,6 @@ public class MusicManager : MonoBehaviour
             bgmSource.loop = false;
             isWaitingForVictory = true;
             isGameStarted = false;
-            Debug.Log("胜利：关卡音乐将继续播放直到结束");
         }
         else
         {
@@ -144,19 +136,12 @@ public class MusicManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 游戏失败时调用（由GameManager在GameOver()中调用）
-    /// </summary>
     public void OnGameOver()
     {
         PlayMenuBGM();
         isGameStarted = false;
-        Debug.Log("失败：立即切换到菜单音乐");
     }
 
-    /// <summary>
-    /// 重启游戏时调用（由GameManager在Restart()中调用）
-    /// </summary>
     public void OnGameRestart()
     {
         // 不停止音乐，让音乐继续播放
@@ -170,14 +155,12 @@ public class MusicManager : MonoBehaviour
     {
         if (menuBGM != null)
         {
-            // 如果已经在播放菜单音乐，就不重复播放
             if (bgmSource.clip == menuBGM)
                 return;
 
             PlayBGM(menuBGM);
             currentLevelIndex = -1;
             isWaitingForVictory = false;
-            Debug.Log("播放菜单音乐");
         }
     }
 
@@ -185,7 +168,6 @@ public class MusicManager : MonoBehaviour
     {
         if (levelNumber < 1 || levelNumber > levelBGM.Length)
         {
-            Debug.LogWarning($"关卡编号错误：{levelNumber}");
             return;
         }
 
@@ -200,7 +182,6 @@ public class MusicManager : MonoBehaviour
             currentLevelIndex = index;
             bgmSource.loop = true;
             isWaitingForVictory = false;
-            Debug.Log($"播放关卡{levelNumber}音乐");
         }
     }
 
